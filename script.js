@@ -305,9 +305,43 @@ function saveSiswa(e){
   const status=document.getElementById('inputStatus').value;
   if(!id){
     const isExist=dataSiswa.find(x=>x.nama.toLowerCase()===nama.toLowerCase()&&x.kelas===kelas);
-    if(isExist) return Swal.fire('Gagal','Nama sudah terdaftar di kelas ini.','warning');
+    if(isExist){
+      Swal.fire({
+        icon:'error',
+        title:'Nama Sudah Terdaftar',
+        html:`<div style="text-align:left;">
+          <p style="margin-bottom:12px;">Santri dengan nama <strong>"${nama}"</strong> sudah terdaftar di kelas <strong>${kelas}</strong>.</p>
+          <div style="background:#f8fafc;padding:14px;border-radius:10px;border-left:3px solid var(--gold);">
+            <div style="font-size:12px;color:#64748b;margin-bottom:6px;font-weight:600;">📊 Data yang ada:</div>
+            <div style="font-weight:700;font-size:14px;color:var(--s800);margin-bottom:4px;">👤 ${isExist.nama}</div>
+            <div style="font-size:12px;color:#94a3b8;">Kelas: <span style="font-weight:600;color:var(--s700);">${isExist.kelas}</span></div>
+            <div style="font-size:12px;color:#94a3b8;">Posisi: <span style="font-weight:600;color:var(--g700);">${isExist.suratTerakhir} ayat ${isExist.ayatTerakhir}</span></div>
+          </div>
+          <p style="margin-top:12px;font-size:13px;color:#64748b;">💡 Silakan gunakan nama yang berbeda atau edit data santri yang sudah ada.</p>
+        </div>`,
+        confirmButtonText:'Mengerti',
+        confirmButtonColor:'var(--g600)',
+        width:'480px'
+      });
+      return;
+    }
     dataSiswa.push({id:Date.now(),nama,kelas,status,hadir:true,suratTerakhir:surat,ayatTerakhir:ayat,history:[{tanggal:tgl,surat,ayat}]});
   } else {
+    // Saat edit, cek apakah nama baru sudah dipakai siswa lain
+    const namaLainSama=dataSiswa.find(x=>x.id!=id && x.nama.toLowerCase()===nama.toLowerCase() && x.kelas===kelas);
+    if(namaLainSama){
+      Swal.fire({
+        icon:'error',
+        title:'Nama Sudah Digunakan',
+        html:`<div style="text-align:left;">
+          <p style="margin-bottom:10px;">Nama <strong>"${nama}"</strong> sudah digunakan oleh santri lain di kelas <strong>${kelas}</strong>.</p>
+          <p style="font-size:13px;color:#64748b;">Silakan gunakan nama yang berbeda.</p>
+        </div>`,
+        confirmButtonText:'Mengerti',
+        confirmButtonColor:'var(--g600)'
+      });
+      return;
+    }
     const i=dataSiswa.findIndex(x=>x.id==id);
     const prev=dataSiswa[i];
     const dupIdx=prev.history.findIndex(h=>h.tanggal===tgl&&h.surat===surat);
