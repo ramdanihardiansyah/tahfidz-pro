@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TahfidzPro — Monitoring Hafalan</title>
+<link rel="icon" id="favicon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+
+<!-- ============================================================ -->
+<!-- LOGIN SCREEN -->
+<!-- ============================================================ -->
+<div id="loginScreen">
+  <div class="login-card" id="loginCard" style="max-width:480px;">
+
+    <!-- STEP 1: PIN -->
+    <div id="loginStep1">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="width:72px;height:72px;background:linear-gradient(135deg,#b8860b,#d4a017);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 24px rgba(184,134,11,.35);">
+          <i class="fas fa-mosque" style="color:white;font-size:24px;"></i>
+        </div>
+        <h2 style="font-family:'Amiri',serif;font-size:26px;font-weight:700;color:#064e3b;margin-bottom:4px;">Monitoring Tahfidz</h2>
+        <p style="color:#94a3b8;font-size:13px;font-weight:500;">Masukkan PIN Guru untuk akses dashboard</p>
+      </div>
+      <input type="password" id="pinInput" placeholder="••••" maxlength="6" class="pin-input" style="margin-bottom:12px;">
+      <p id="loginError" class="hidden" style="color:#ef4444;font-size:13px;font-weight:600;margin-bottom:12px;">
+        <i class="fas fa-exclamation-circle"></i> PIN salah, silakan coba lagi
+      </p>
+      <button onclick="checkPinStep()" class="btn-primary" style="width:100%;justify-content:center;border-radius:14px;padding:14px;font-size:15px;">
+        <i class="fas fa-arrow-right"></i> Lanjut
+      </button>
+      <p style="margin-top:14px;font-size:11px;color:#94a3b8;text-align:center;">PIN default: 1234</p>
+    </div>
+
+    <!-- STEP 2: PROFIL -->
+    <div id="loginStep2" class="hidden">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="width:56px;height:56px;background:linear-gradient(135deg,#047857,#059669);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+          <i class="fas fa-user-tie" style="color:white;font-size:20px;"></i>
+        </div>
+        <h3 style="font-family:'Amiri',serif;font-size:20px;font-weight:700;color:#064e3b;">Profil Lembaga</h3>
+        <p style="color:#94a3b8;font-size:12px;margin-top:2px;">Lengkapi data untuk sertifikat & laporan</p>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label class="form-label">Logo Lembaga</label>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div id="logoPreview" style="width:56px;height:56px;border-radius:12px;background:#f1f5f9;border:2px dashed #cbd5e1;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+            <i class="fas fa-image" style="color:#cbd5e1;font-size:20px;"></i>
+          </div>
+          <div style="flex:1;">
+            <input type="file" id="logoUpload" accept="image/*" style="display:none;" onchange="previewLogo(event)">
+            <button onclick="document.getElementById('logoUpload').click()" style="background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;width:100%;">
+              <i class="fas fa-upload"></i> Upload Logo (PNG/JPG)
+            </button>
+            <p style="font-size:10px;color:#94a3b8;margin-top:4px;">Opsional — maks 1MB</p>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div>
+          <label class="form-label">Nama Guru / Pembimbing <span style="color:#ef4444">*</span></label>
+          <input type="text" id="loginNamaGuru" class="form-input" placeholder="Ustadz / Ustadzah ...">
+        </div>
+        <div>
+          <label class="form-label">Nama Lembaga / Pesantren <span style="color:#ef4444">*</span></label>
+          <input type="text" id="loginNamaLembaga" class="form-input" placeholder="Nama sekolah / pesantren ...">
+        </div>
+        <div>
+          <label class="form-label">Nama Kepala Sekolah / Mudir</label>
+          <input type="text" id="loginNamaKepala" class="form-input" placeholder="Nama kepala sekolah ...">
+        </div>
+        <div>
+          <label class="form-label">📚 Daftar Kelas yang Diampu</label>
+          <div id="loginKelasList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+          <button type="button" onclick="loginTambahKelas()" style="width:100%;background:#f0fdf4;border:1.5px dashed #86efac;color:#059669;border-radius:10px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <i class="fas fa-plus"></i> Tambah Kelas
+          </button>
+        </div>
+      </div>
+      <p id="loginStep2Error" class="hidden" style="color:#ef4444;font-size:12px;font-weight:600;margin-top:10px;">
+        <i class="fas fa-exclamation-circle"></i> Nama guru dan lembaga wajib diisi
+      </p>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="backToStep1()" style="flex:0 0 auto;background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;border-radius:14px;padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <button onclick="finishLogin()" class="btn-primary" style="flex:1;justify-content:center;border-radius:14px;padding:13px;font-size:14px;">
+          <i class="fas fa-unlock-alt"></i> Buka Dashboard
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- APP VIEW -->
+<!-- ============================================================ -->
+<div id="appView" class="hidden">
+
+  <div id="mobileOverlay" class="mobile-overlay" onclick="closeSidebar()"></div>
+  <button id="hamburgerBtn" class="hamburger-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon" id="sidebarLogoIcon" style="overflow:hidden;">
+        <i class="fas fa-book-quran" id="sidebarLogoFallback"></i>
+      </div>
+      <div>
+        <h1>TahfidzPro</h1>
+        <span>Al-Quran Monitoring</span>
+        <span id="sidebarTanggal" style="color:rgba(209,250,229,0.5);font-size:9px;font-weight:500;letter-spacing:1px;text-transform:none;display:block;margin-top:3px;line-height:1.4;"></span>
+      </div>
+    </div>
+    <div class="sidebar-divider"></div>
+    <nav style="flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto;">
+      <p class="nav-label">Menu Utama</p>
+      <button onclick="setPage('dashboard')" class="sidebar-btn" id="nav-dashboard"><i class="fas fa-th-large"></i><span>Dashboard</span></button>
+      <button onclick="setPage('rekap')" class="sidebar-btn" id="nav-rekap"><i class="fas fa-chart-line"></i><span>Rekap & Grafik</span></button>
+      <button onclick="setPage('target')" class="sidebar-btn" id="nav-target"><i class="fas fa-bullseye"></i><span>Target Kelas</span></button>
+      <button onclick="openQuranModal()" class="sidebar-btn" id="nav-quran"><i class="fas fa-quran"></i><span>Al-Qur'an Digital</span></button>
+      <button onclick="setPage('doa')" class="sidebar-btn" id="nav-doa"><i class="fas fa-hands-praying"></i><span>Doa & Dzikir</span></button>
+      <p class="nav-label" style="margin-top:16px;">Filter Kelas</p>
+      <div id="filterKelasContainer"></div>
+    </nav>
+    <div class="sidebar-divider"></div>
+    <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Keluar (Lock)</button>
+    <button onclick="openSettings()" class="settings-btn"><i class="fas fa-cog"></i> Pengaturan</button>
+    <div id="sidebarPrayerWidget"></div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main>
+
+    <!-- PAGE: DASHBOARD -->
+    <div id="page-dashboard">
+      <header class="page-header-row" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;gap:16px;flex-wrap:wrap;">
+        <div>
+          <h2 id="titleDisplay" class="page-title">Semua Kelas</h2>
+          <p class="page-subtitle" id="subtitleDisplay" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">Monitoring hafalan harian santri</p>
+        </div>
+        <div class="header-actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button onclick="toggleDarkMode()" class="btn-ghost" style="padding:10px 14px;"><i id="darkIcon" class="fas fa-moon"></i></button>
+          <input type="file" id="importCSV" accept=".csv" class="hidden" onchange="handleImport(event)">
+          <button onclick="document.getElementById('importCSV').click()" class="btn-ghost"><i class="fas fa-file-import"></i> Import</button>
+          <button onclick="exportToCSV()" class="btn-ghost"><i class="fas fa-download"></i> Backup</button>
+          <button onclick="openSetoranCepat()" class="btn-ghost" style="border-color:#0d9488;color:#0d9488;"><i class="fas fa-bolt"></i> Setoran Cepat</button>
+          <button onclick="printRaporKelas()" class="btn-ghost" style="border-color:#7c3aed;color:#7c3aed;"><i class="fas fa-print"></i> Cetak Raport</button>
+          <button onclick="openModal()" class="btn-primary"><i class="fas fa-plus"></i> Tambah Siswa</button>
+        </div>
+      </header>
+
+      <!-- Alert Stagnan -->
+      <div id="stagnanAlert" class="hidden" style="margin-bottom:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <span style="font-weight:700;font-size:13px;color:#ef4444;"><i class="fas fa-exclamation-triangle"></i> Perhatian — Siswa Tidak Ada Setoran (&gt;7 hari)</span>
+          <button onclick="document.getElementById('stagnanAlert').classList.add('hidden')" style="color:#94a3b8;background:none;border:none;cursor:pointer;font-size:18px;">×</button>
+        </div>
+        <div id="stagnanList"></div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stats-grid" style="margin-bottom:28px;">
+        <div class="stat-card gold-accent" style="display:flex;align-items:center;gap:16px;">
+          <div style="width:48px;height:48px;background:rgba(212,160,23,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#d4a017;font-size:20px;flex-shrink:0;position:relative;z-index:1;"><i class="fas fa-users"></i></div>
+          <div style="position:relative;z-index:1;">
+            <p style="font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.5px;">Total Siswa</p>
+            <h3 id="statTotal" style="font-size:32px;font-weight:900;color:white;line-height:1;font-variant-numeric:tabular-nums;">0</h3>
+          </div>
+        </div>
+        <div class="stat-card" style="display:flex;align-items:center;gap:16px;">
+          <div style="width:48px;height:48px;background:rgba(16,185,129,.1);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#059669;font-size:20px;flex-shrink:0;"><i class="fas fa-check-double"></i></div>
+          <div>
+            <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;">Lancar</p>
+            <h3 id="statLancar" style="font-size:32px;font-weight:900;color:#064e3b;line-height:1;font-variant-numeric:tabular-nums;">0</h3>
+          </div>
+        </div>
+        <div class="stat-card" style="display:flex;align-items:center;gap:16px;">
+          <div style="width:48px;height:48px;background:rgba(245,158,11,.1);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#d97706;font-size:20px;flex-shrink:0;"><i class="fas fa-sync"></i></div>
+          <div>
+            <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;">Murajaah</p>
+            <h3 id="statMurajaah" style="font-size:32px;font-weight:900;color:#064e3b;line-height:1;font-variant-numeric:tabular-nums;">0</h3>
+          </div>
+        </div>
+        <div class="stat-card" style="display:flex;align-items:center;gap:16px;">
+          <div style="width:48px;height:48px;background:rgba(239,68,68,.08);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#ef4444;font-size:20px;flex-shrink:0;"><i class="fas fa-exclamation-triangle"></i></div>
+          <div>
+            <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;">Perlu Bimbingan</p>
+            <h3 id="statBimbingan" style="font-size:32px;font-weight:900;color:#064e3b;line-height:1;font-variant-numeric:tabular-nums;">0</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart + Filter row -->
+      <div style="display:grid;grid-template-columns:1fr 200px;gap:16px;margin-bottom:24px;align-items:start;">
+        <div style="background:white;border-radius:20px;padding:16px 20px;border:1px solid var(--s100);box-shadow:0 2px 8px rgba(6,78,59,.05);">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+            <button id="btnFilterAll" class="filter-pill active" onclick="setStatusFilter('All')"><i class="fas fa-list" style="font-size:10px;"></i> Semua</button>
+            <button id="btnFilterLancar" class="filter-pill" onclick="setStatusFilter('Lancar')">✅ Lancar</button>
+            <button id="btnFilterMurajaah" class="filter-pill" onclick="setStatusFilter('Murajaah')">🔄 Murajaah</button>
+            <button id="btnFilterPerluBimbingan" class="filter-pill" onclick="setStatusFilter('Perlu Bimbingan')">⚠️ Perlu Bimbingan</button>
+            <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+              <select id="sortSelect" onchange="renderDashboard()" class="form-input" style="width:auto;padding:7px 12px;font-size:12px;">
+                <option value="nama">Urut: Nama</option>
+                <option value="kelas">Urut: Kelas</option>
+                <option value="progress">Urut: Progress</option>
+                <option value="stagnan">Urut: Stagnan</option>
+              </select>
+              <input id="searchInput" type="text" placeholder="🔍 Cari nama..." class="form-input" style="width:180px;padding:7px 12px;font-size:12px;" oninput="renderDashboard()">
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--s400);font-weight:600;"><span id="countBadge">0 siswa</span></div>
+        </div>
+        <div style="background:white;border-radius:20px;padding:16px;border:1px solid var(--s100);box-shadow:0 2px 8px rgba(6,78,59,.05);display:flex;align-items:center;justify-content:center;">
+          <canvas id="statusPieChart" width="120" height="120"></canvas>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-container">
+        <div class="table-scroll-wrapper">
+          <table>
+            <thead><tr>
+              <th>Santri</th><th>Kelas</th><th style="min-width:200px;">Progress Hafalan</th><th>Status</th><th style="text-align:center;">Aksi</th>
+            </tr></thead>
+            <tbody id="siswaTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- end page-dashboard -->
+
+    <!-- PAGE: REKAP -->
+    <div id="page-rekap" class="hidden">
+      <header style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:16px;flex-wrap:wrap;">
+        <div><h2 class="page-title">Rekap & Grafik</h2><p class="page-subtitle">Analisis perkembangan hafalan per periode</p></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <select id="rekapKelas" onchange="renderRekap()" class="form-input" style="width:auto;padding:9px 14px;font-size:13px;"></select>
+          <div class="tab-bar">
+            <button id="tabMinggu" class="tab-item active" onclick="setRekapTab('minggu')">7 Hari</button>
+            <button id="tabBulan" class="tab-item" onclick="setRekapTab('bulan')">6 Bulan</button>
+          </div>
+        </div>
+      </header>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;">
+        <div class="rekap-card">
+          <p style="font-size:11px;font-weight:700;color:var(--s400);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">Tren Setoran</p>
+          <div style="height:220px;"><canvas id="rekapChart"></canvas></div>
+        </div>
+        <div class="rekap-card">
+          <p style="font-size:11px;font-weight:700;color:var(--s400);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">Ringkasan</p>
+          <div id="rekapSummary" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:13px;font-weight:700;color:var(--s600);margin-bottom:12px;">🏆 Leaderboard Hafalan</p>
+        <div id="leaderboard" class="leaderboard-grid"></div>
+      </div>
+    </div><!-- end page-rekap -->
+
+    <!-- PAGE: TARGET -->
+    <div id="page-target" class="hidden">
+      <header style="margin-bottom:28px;">
+        <h2 class="page-title">Target Kelas</h2>
+        <p class="page-subtitle">Pantau pencapaian target hafalan per kelas</p>
+      </header>
+      <div id="targetGrid" class="target-grid"></div>
+    </div><!-- end page-target -->
+
+    <!-- PAGE: DOA & DZIKIR -->
+    <div id="page-doa" class="hidden">
+      <header style="margin-bottom:28px;">
+        <h2 class="page-title">Doa & Dzikir</h2>
+        <p class="page-subtitle">Kumpulan doa harian dan dzikir untuk santri & guru</p>
+      </header>
+
+      <!-- Tab kategori -->
+      <div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;">
+        <button class="doa-tab active" data-tab="pagi" onclick="setDoaTab('pagi')"><i class="fas fa-sun"></i> Pagi</button>
+        <button class="doa-tab" data-tab="sore" onclick="setDoaTab('sore')"><i class="fas fa-moon"></i> Petang</button>
+        <button class="doa-tab" data-tab="sholat" onclick="setDoaTab('sholat')"><i class="fas fa-mosque"></i> Setelah Sholat</button>
+        <button class="doa-tab" data-tab="belajar" onclick="setDoaTab('belajar')"><i class="fas fa-book-open"></i> Belajar & Hafalan</button>
+        <button class="doa-tab" data-tab="harian" onclick="setDoaTab('harian')"><i class="fas fa-star"></i> Doa Harian</button>
+      </div>
+
+      <div id="doaGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;"></div>
+    </div><!-- end page-doa -->
+
+  </main><!-- end main -->
+</div><!-- end appView -->
+
+<!-- ============================================================ -->
+<!-- MODALS -->
+<!-- ============================================================ -->
+
+<!-- Modal Tambah/Edit Siswa -->
+<div id="siswaModal" class="modal-overlay" style="z-index:110;">
+  <div class="modal-box" style="max-width:520px;">
+    <div class="modal-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
+        <div>
+          <p style="color:rgba(255,255,255,.6);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;">Input Data</p>
+          <h3 id="modalTitle" style="font-family:'Amiri',serif;font-size:22px;color:white;font-weight:700;margin-top:2px;">Tambah Siswa Baru</h3>
+        </div>
+        <button onclick="closeModal()" style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);border:none;color:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-header-gold-line"></div>
+    </div>
+    <form id="siswaForm" onsubmit="saveSiswa(event)" style="padding:24px 28px;display:flex;flex-direction:column;gap:14px;">
+      <input type="hidden" id="siswaId">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="grid-column:span 2;">
+          <label class="form-label">Nama Lengkap <span style="color:#ef4444;">*</span></label>
+          <input type="text" id="inputNama" class="form-input" required placeholder="Nama santri...">
+        </div>
+        <div>
+          <label class="form-label">Kelas</label>
+          <select id="inputKelas" class="form-input"></select>
+        </div>
+        <div>
+          <label class="form-label">Tanggal Setoran</label>
+          <input type="date" id="inputTanggal" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Surat Terakhir</label>
+          <select id="inputSurat" class="form-input" onchange="updateMaxAyatHint()"></select>
+        </div>
+        <div>
+          <label class="form-label">Ayat ke- <span id="maxAyatHint" style="color:#94a3b8;font-weight:400;text-transform:none;letter-spacing:0;"></span></label>
+          <input type="number" id="inputAyat" class="form-input" min="1" required oninput="validasiMaksimalAyat()" placeholder="Nomor ayat">
+        </div>
+        <div style="grid-column:span 2;">
+          <label class="form-label">Status Hafalan</label>
+          <select id="inputStatus" class="form-input">
+            <option value="Lancar">✅ Lancar</option>
+            <option value="Murajaah">🔄 Murajaah</option>
+            <option value="Perlu Bimbingan">⚠️ Perlu Bimbingan</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button type="submit" class="btn-primary" style="flex:1;justify-content:center;padding:12px;border-radius:14px;"><i class="fas fa-save"></i> Simpan</button>
+        <button type="button" onclick="closeModal()" class="btn-ghost" style="padding:12px 20px;border-radius:14px;">Batal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Detail/History -->
+<div id="historyModal" class="modal-overlay" style="z-index:115;">
+  <div class="modal-box" style="max-width:520px;max-height:85vh;overflow-y:auto;">
+    <div class="modal-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
+        <div>
+          <p style="color:rgba(255,255,255,.6);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;">Riwayat Hafalan</p>
+          <h3 id="historyTitle" style="font-family:'Amiri',serif;font-size:22px;color:white;font-weight:700;margin-top:2px;"></h3>
+        </div>
+        <button onclick="closeHistory()" style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);border:none;color:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-header-gold-line"></div>
+    </div>
+    <div style="padding:20px 24px;">
+      <div style="height:120px;margin-bottom:16px;"><canvas id="historyMiniChart"></canvas></div>
+      <div id="sertifikatList"></div>
+      <div id="timelineContainer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Setoran Cepat -->
+<div id="setoranModal" class="modal-overlay" style="z-index:120;">
+  <div class="modal-box" style="max-width:700px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;" id="setoranModalBox">
+    <div class="modal-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
+        <div>
+          <p style="color:rgba(255,255,255,.6);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;">Input Massal</p>
+          <h3 style="font-family:'Amiri',serif;font-size:22px;color:white;font-weight:700;margin-top:2px;">⚡ Setoran Cepat</h3>
+        </div>
+        <button onclick="closeSetoranCepat()" style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);border:none;color:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-header-gold-line"></div>
+    </div>
+    <div style="padding:20px 24px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <select id="setoranFilterKelas" onchange="renderSetoranList()" class="form-input" style="width:auto;padding:8px 14px;font-size:13px;"></select>
+        <input type="date" id="setoranTanggal" class="form-input" style="width:auto;padding:8px 14px;font-size:13px;">
+      </div>
+      <div id="setoranList"></div>
+      <button onclick="saveSetoranCepat()" class="btn-primary" style="width:100%;justify-content:center;padding:12px;border-radius:14px;">
+        <i class="fas fa-save"></i> Simpan Semua Setoran
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Target -->
+<div id="targetModal" class="modal-overlay" style="z-index:115;">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
+        <h3 id="targetModalTitle" style="font-family:'Amiri',serif;font-size:22px;color:white;font-weight:700;"></h3>
+        <button onclick="closeTargetModal()" style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);border:none;color:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-header-gold-line"></div>
+    </div>
+    <div style="padding:24px 28px;display:flex;flex-direction:column;gap:14px;">
+      <input type="hidden" id="targetKelasId">
+      <div><label class="form-label">Surat Target</label><select id="targetSurat" class="form-input"></select></div>
+      <div><label class="form-label">Ayat Target</label><input type="number" id="targetAyat" class="form-input" min="1" placeholder="Nomor ayat target"></div>
+      <div><label class="form-label">Deadline</label><input type="date" id="targetDeadline" class="form-input"></div>
+      <button onclick="saveTarget()" class="btn-primary" style="width:100%;justify-content:center;padding:12px;border-radius:14px;"><i class="fas fa-bullseye"></i> Simpan Target</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Catatan -->
+<div id="notesModal" class="modal-overlay" style="z-index:130;">
+  <div class="modal-box" style="max-width:460px;">
+    <div class="modal-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
+        <h3 id="notesSiswaName" style="font-family:'Amiri',serif;font-size:22px;color:white;font-weight:700;"></h3>
+        <button onclick="closeNotes()" style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);border:none;color:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-header-gold-line"></div>
+    </div>
+    <div style="padding:24px 28px;">
+      <input type="hidden" id="notesSiswaId">
+      <textarea id="notesContent" class="form-input" style="width:100%;min-height:160px;resize:vertical;font-size:14px;line-height:1.7;" placeholder="Tulis catatan perkembangan santri..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="saveNotes()" class="btn-primary" style="flex:1;justify-content:center;padding:11px;border-radius:12px;font-size:13px;"><i class="fas fa-save"></i> Simpan Catatan</button>
+        <button onclick="document.getElementById('notesContent').value=''" style="background:rgba(239,68,68,.08);color:#ef4444;border:1px solid rgba(239,68,68,.2);border-radius:12px;padding:11px 16px;font-size:13px;font-weight:600;cursor:pointer;"><i class="fas fa-eraser"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Print Raport -->
+<div id="printModal" class="modal-overlay" style="z-index:135;">
+  <div class="modal-box" style="max-width:560px;">
+    <div class="modal-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
+        <h3 style="font-family:'Amiri',serif;font-size:22px;color:white;font-weight:700;">🖨️ Cetak Raport Hafalan</h3>
+        <button onclick="closePrintModal()" style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);border:none;color:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-header-gold-line"></div>
+    </div>
+    <div style="padding:24px 28px;display:flex;flex-direction:column;gap:16px;">
+      <div><label class="form-label">Pilih Kelas</label><select id="printKelasSelect" class="form-input"></select></div>
+      <div>
+        <label class="form-label">Tampilkan Kolom</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="printColNama" checked style="accent-color:#059669;"> Nama Santri</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="printColKelas" checked style="accent-color:#059669;"> Kelas</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="printColSurat" checked style="accent-color:#059669;"> Surat Terakhir</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="printColAyat" checked style="accent-color:#059669;"> Ayat</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="printColStatus" checked style="accent-color:#059669;"> Status</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="printColProgress" checked style="accent-color:#059669;"> % Progress</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="printColCatatan" style="accent-color:#059669;"> Catatan</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="printColTanggal" checked style="accent-color:#059669;"> Tgl Setoran</label>
+        </div>
+      </div>
+      <button onclick="doPrint()" class="btn-primary" style="width:100%;justify-content:center;padding:12px;border-radius:14px;"><i class="fas fa-print"></i> Cetak / Simpan PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Settings -->
+<div id="settingsModal" class="modal-overlay" style="z-index:300;">
+  <div class="modal-box" style="max-width:460px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
+        <h3 style="font-family:'Amiri',serif;font-size:22px;color:white;font-weight:700;">⚙️ Pengaturan</h3>
+        <button onclick="closeSettings()" style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);border:none;color:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-header-gold-line"></div>
+    </div>
+    <div style="padding:24px 28px;display:flex;flex-direction:column;gap:20px;">
+      <div>
+        <label class="form-label" style="margin-bottom:10px;display:block;">🔐 Ganti PIN Guru</label>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <input type="password" id="settingPinLama" class="form-input" placeholder="PIN lama" maxlength="6">
+          <input type="password" id="settingPinBaru" class="form-input" placeholder="PIN baru (min 4 digit)" maxlength="6">
+          <input type="password" id="settingPinKonfirmasi" class="form-input" placeholder="Konfirmasi PIN baru" maxlength="6">
+          <button onclick="gantiPIN()" class="btn-primary" style="justify-content:center;padding:10px;border-radius:12px;font-size:13px;"><i class="fas fa-key"></i> Simpan PIN Baru</button>
+        </div>
+      </div>
+      <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(184,134,11,.3),transparent);"></div>
+      <div>
+        <label class="form-label" style="margin-bottom:10px;display:block;">⏰ Alert Stagnan (hari)</label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="number" id="settingStagnan" class="form-input" min="1" max="30" value="7" style="width:80px;text-align:center;">
+          <span style="font-size:13px;color:#64748b;">hari tanpa setoran = peringatan</span>
+        </div>
+      </div>
+      <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(184,134,11,.3),transparent);"></div>
+      <div>
+        <label class="form-label" style="margin-bottom:10px;display:block;">🏫 Nama Lembaga</label>
+        <input type="text" id="settingNamaLembaga" class="form-input" placeholder="Nama sekolah / pesantren...">
+      </div>
+      <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(184,134,11,.3),transparent);"></div>
+      <div>
+        <label class="form-label" style="margin-bottom:10px;display:block;">📚 Manajemen Kelas</label>
+        <div id="settingKelasList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;max-height:200px;overflow-y:auto;"></div>
+        <button type="button" onclick="settingTambahKelas()" style="width:100%;background:#f0fdf4;border:1.5px dashed #86efac;color:#059669;border-radius:10px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <i class="fas fa-plus"></i> Tambah Kelas
+        </button>
+      </div>
+      <button onclick="saveSettings()" class="btn-primary" style="justify-content:center;padding:12px;border-radius:14px;"><i class="fas fa-save"></i> Simpan Pengaturan</button>
+      <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(184,134,11,.3),transparent);"></div>
+      <div style="background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.12);border-radius:16px;padding:16px;">
+        <p style="font-size:11px;font-weight:700;color:#ef4444;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">⚠️ Zona Berbahaya</p>
+        <button onclick="resetAllData()" style="background:transparent;color:#ef4444;border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;"><i class="fas fa-trash-alt"></i> Hapus Semua Data</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Al-Qur'an Digital -->
+<div id="quranModal" class="modal-overlay" style="z-index:200;">
+  <div class="modal-box" style="max-width:680px;height:85vh;display:flex;flex-direction:column;">
+    <div class="modal-header" style="flex-shrink:0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
+        <h3 style="font-family:'Amiri',serif;font-size:22px;color:white;font-weight:700;">📖 Al-Qur'an Digital</h3>
+        <button onclick="closeQuranModal()" style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);border:none;color:white;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <select id="quranSurahSelect" class="form-input" onchange="loadSurah()" style="flex:1;padding:8px 12px;font-size:13px;"><option value="">Pilih Surat...</option></select>
+        <select id="quranAyahJump" class="form-input" onchange="jumpToAyah()" style="width:140px;padding:8px 12px;font-size:13px;"><option value="">Ayat ke...</option></select>
+        <button id="btnTranslation" onclick="toggleTranslation()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;">🌐 Terjemahan</button>
+      </div>
+      <div class="modal-header-gold-line"></div>
+    </div>
+    <div id="quranSurahInfo" style="padding:12px 28px;background:var(--s50);border-bottom:1px solid var(--s100);flex-shrink:0;display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="quranSurahNo" style="width:36px;height:36px;background:var(--g900);color:white;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;"></span>
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <h4 id="quranSurahArabic" style="font-family:'Amiri',serif;font-size:22px;color:var(--g900);font-weight:700;"></h4>
+              <span id="quranSurahLatin" style="font-size:14px;font-weight:700;color:var(--g800);"></span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:2px;">
+              <span id="quranSurahType" style="font-size:11px;font-weight:600;background:var(--goldp);color:var(--goldd);padding:2px 8px;border-radius:99px;"></span>
+              <span id="quranSurahAyahCount" style="font-size:11px;font-weight:600;color:var(--s400);"></span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="prevSurah()" id="quranPrevBtn" class="btn-ghost" style="font-size:12px;padding:7px 12px;" disabled><i class="fas fa-chevron-left"></i></button>
+          <button onclick="playAudio()" id="btnPlayAudio" style="display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--g700),var(--g600));color:white;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;"><i class="fas fa-play" id="playIcon"></i> <span id="audioLabel">Putar</span></button>
+          <button onclick="nextSurah()" id="quranNextBtn" class="btn-ghost" style="font-size:12px;padding:7px 12px;" disabled><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+    <div id="quranBismillah" style="display:none;text-align:center;padding:16px 28px 4px;flex-shrink:0;">
+      <p style="font-family:'Amiri',serif;font-size:28px;color:var(--g900);">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+    </div>
+    <div id="quranLoading" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;gap:16px;">
+      <div style="width:48px;height:48px;border-radius:50%;border:3px solid var(--s100);border-top-color:var(--g600);animation:quranSpin .8s linear infinite;"></div>
+      <p style="color:var(--s400);font-size:14px;">Memuat Al-Qur'an...</p>
+    </div>
+    <div id="quranEmpty" style="flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px;gap:16px;text-align:center;">
+      <div style="width:64px;height:64px;background:linear-gradient(135deg,var(--g900),var(--g800));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:26px;color:white;"><i class="fas fa-quran"></i></div>
+      <div>
+        <h4 style="font-family:'Amiri',serif;font-size:20px;color:var(--g900);font-weight:700;margin-bottom:4px;">Pilih Surat untuk Membaca</h4>
+        <p style="color:var(--s400);font-size:13px;">Gunakan dropdown di atas untuk memilih surat</p>
+      </div>
+    </div>
+    <div id="quranAyatList" style="flex:1;overflow-y:auto;padding:8px 28px;display:none;"></div>
+    <div style="padding:10px 24px;border-top:1px solid var(--s100);flex-shrink:0;display:flex;justify-content:space-between;align-items:center;background:white;">
+      <span id="quranProgress" style="font-size:12px;color:var(--s400);font-weight:600;"></span>
+    </div>
+  </div>
+</div>
+<script src="script.js">
+
+</script>
+</body>
+</html>
