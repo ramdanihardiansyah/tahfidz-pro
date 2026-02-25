@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 📖 TahfidzPro - Aplikasi Monitoring Hafalan Al-Qur'an
 
 Aplikasi web modern untuk monitoring dan tracking hafalan Al-Qur'an santri.
@@ -45,6 +46,11 @@ vercel --prod
 ```
 
 ## 📝 Cara Menggunakan
+=======
+# tahfidz-pro
+
+📝 Cara Menggunakan
+>>>>>>> 4e9619c59b095520c8e6dcdac86de6bc1536074f
 
 1. **Login Pertama Kali**
    - Masukkan PIN default: `1234`
@@ -66,6 +72,7 @@ vercel --prod
    - Lihat progress di dashboard
    - Filter berdasarkan kelas atau status
    - Cari siswa dengan `Ctrl + K`
+<<<<<<< HEAD
 
 ## 🛠️ Cara Edit Setelah Deploy
 
@@ -128,3 +135,5 @@ Untuk pertanyaan atau bug report, silakan hubungi developer.
 ---
 
 **© 2024 TahfidzPro** - Dibuat dengan ❤️ untuk kemudahan monitoring hafalan
+=======
+>>>>>>> 4e9619c59b095520c8e6dcdac86de6bc1536074f
